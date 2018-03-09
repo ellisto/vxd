@@ -8,18 +8,18 @@ import functools
 echo = functools.partial(print, end='', flush=True)
 
 class vxd():
-    def __init__(self, file='', bpl=16):
-        self.file = file
+    def __init__(self, filepath='', bpl=16):
+        self.file = filepath
         self.bpl = bpl
         self.statusline = "Opening {}...".format(self.file)
         self.term = Terminal()
         self.buf = None
         self.redraw()
-        with open(file, 'rb') as f:
+        with open(self.file, 'rb') as f:
             self.buf = f.read()
-            self.statusline += 'read {} bytes'.format(len(self.buf))
         if self.buf is not None:
             self.selected_byte = 0
+            self.first_displayed_byte = 0
         self.redraw()
 
 
@@ -38,25 +38,40 @@ class vxd():
         self.printbuf()
 
 
+    def last_displayed_byte(self):
+        return self.first_displayed_byte + self.num_bytes_displayed() - 1
+
+
+    def num_bytes_displayed(self):
+        height = self.term.height - 1
+        return self.bpl * height
+
+
     def printbuf(self):
         if self.buf is None:
             return
         bpl = self.bpl
-        height = self.term.height - 1
-        numbytes = bpl * height
         asc_line = []
+        numbytes = self.num_bytes_displayed()
+        if self.selected_byte > self.last_displayed_byte():
+            self.first_displayed_byte += bpl
+        elif self.selected_byte < self.first_displayed_byte:
+            self.first_displayed_byte -= bpl
+
+        offset = self.first_displayed_byte
         bnum = 0
         t = self.term
         with self.term.location(0,0):
-            for i, b in enumerate(self.buf):
+            for i, b in enumerate(self.buf[offset:]):
                 if i == numbytes:
                     break
                 bnum = i % bpl
                 if bnum == 0:
-                    echo('{:08x} '.format(i))
+                    echo('{:08x} '.format(i + offset))
 
-                active = (i == self.selected_byte) 
-                echo('{}{:02x}{} '.format(t.standout if active  else t.no_standout,  b, t.no_standout))
+                active = (i + offset == self.selected_byte) 
+                h = '{:02x}'.format(b)
+                echo('{} '.format(t.standout(h) if active else h))
                 char = t.bold(chr(b)) if (b > 0x1f and b < 0x7f) else t.dim('.')
                 asc_line.append(t.standout(char) if active else char) 
                 if bnum == bpl - 1: # time for new line
@@ -90,10 +105,14 @@ class vxd():
                 elif inp == 'j':
                     self.selected_byte += self.bpl if (self.selected_byte + self.bpl < len(self.buf)) else 0
                 elif inp == 'k':
-                    self.selected_byte -= self.bpl if (self.selected_byte - self.bpl > 0 ) else 0
+                    self.selected_byte -= self.bpl if (self.selected_byte - self.bpl >= 0 ) else 0
 
                 if self.selected_byte != old_byte:
-                    self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(b=self.selected_byte, l=len(self.buf))
+                    self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})\t\tdisplayed:({first:x},{last:x})'.format(
+                            b=self.selected_byte, l=len(self.buf),
+                            first = self.first_displayed_byte,
+                            last = self.last_displayed_byte()
+                            )
 
                 self.redraw()
         self.clear()
