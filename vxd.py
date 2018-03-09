@@ -128,7 +128,7 @@ class vxd():
                             b=self.selected_byte, l=self.last_byte(),
                             )
 
-                self.redraw()
+                    self.redraw()
         self.clear()
 
 
