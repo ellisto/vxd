@@ -78,7 +78,7 @@ class vxd():
                     break
                 bnum = i % bpl
                 if bnum == 0:
-                    echo('{:08x} '.format(i + offset))
+                    echo(t.blue('{:08x} '.format(i + offset)))
 
                 active = (i + offset == self.selected_byte) 
                 h = '{:02x}'.format(b)
