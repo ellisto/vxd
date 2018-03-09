@@ -99,31 +99,34 @@ class vxd():
 
     def bmain(self):
         self.redraw()
-        term = self.term
-        with term.hidden_cursor(), \
-                term.location(), \
-                term.fullscreen(), \
-                term.cbreak(), \
-                term.keypad():
+        t = self.term
+        with t.hidden_cursor(), \
+                t.location(), \
+                t.fullscreen(), \
+                t.cbreak(), \
+                t.keypad():
             inp = None
             while True:
-                inp = term.inkey()
+                inp = t.inkey()
                 self.statusline = ''
                 old_byte = self.selected_byte
                 # q quits
                 if inp == 'q':
                     break
-                elif inp == 'h':
+                # hjkl or arrow keys move cursor
+                elif inp == 'h' or inp.code == t.KEY_LEFT:
                     self.selected_byte -= 1 if self.selected_byte > 0 else 0
-                elif inp == 'l':
+                elif inp == 'l' or inp.code  == t.KEY_RIGHT:
                     self.selected_byte += 1 if self.selected_byte < self.last_byte() else 0
-                elif inp == 'j':
+                elif inp == 'j' or inp.code  == t.KEY_DOWN:
                     self.selected_byte += self.bpl if (self.selected_byte + self.bpl < self.last_byte()) else 0
-                elif inp == 'k':
+                elif inp == 'k' or inp.code  == t.KEY_UP:
                     self.selected_byte -= self.bpl if (self.selected_byte - self.bpl >= 0 ) else 0
-                elif inp == 'g':
+                # g or home go to beginning 
+                elif inp == 'g' or inp.code  == t.KEY_HOME:
                     self.selected_byte = 0
-                elif inp == 'G':
+                # G or end go to end
+                elif inp == 'G' or inp.code  == t.KEY_END:
                     self.selected_byte = self.last_byte()
 
                 if self.selected_byte != old_byte:
