@@ -47,16 +47,25 @@ class vxd():
         return self.bpl * height
 
 
+    def row_of(self, byteidx):
+        return byteidx // self.bpl
+
+
     def printbuf(self):
         if self.buf is None:
             return
         bpl = self.bpl
         asc_line = []
         numbytes = self.num_bytes_displayed()
-        if self.selected_byte > self.last_displayed_byte():
-            self.first_displayed_byte += bpl
-        elif self.selected_byte < self.first_displayed_byte:
-            self.first_displayed_byte -= bpl
+        first_displayed_row = self.row_of(self.first_displayed_byte)
+        last_displayed_row = self.row_of(self.last_displayed_byte())
+        selected_row = self.row_of(self.selected_byte)
+        if selected_row > last_displayed_row:
+            rows_to_scroll = selected_row - last_displayed_row
+            self.first_displayed_byte += bpl * rows_to_scroll
+        elif selected_row < first_displayed_row:
+            rows_to_scroll = first_displayed_row - selected_row
+            self.first_displayed_byte -= bpl * rows_to_scroll
 
         offset = self.first_displayed_byte
         bnum = 0
@@ -106,6 +115,10 @@ class vxd():
                     self.selected_byte += self.bpl if (self.selected_byte + self.bpl < len(self.buf)) else 0
                 elif inp == 'k':
                     self.selected_byte -= self.bpl if (self.selected_byte - self.bpl >= 0 ) else 0
+                elif inp == 'g':
+                    self.selected_byte = 0
+                elif inp == 'G':
+                    self.selected_byte = len(self.buf) - 1
 
                 if self.selected_byte != old_byte:
                     self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})\t\tdisplayed:({first:x},{last:x})'.format(
