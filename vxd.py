@@ -28,8 +28,9 @@ class vxd():
 
 
     def redraw_status(self):
-         with self.term.location(0, self.term.height):
-             echo(self.statusline)
+        padding = (self.term.width - len(self.statusline)) * ' '
+        with self.term.location(0, self.term.height):
+             echo(self.statusline + padding)
              
 
     def redraw(self):
@@ -128,8 +129,6 @@ class vxd():
                 if self.selected_byte != old_byte:
                     self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(
                             b=self.selected_byte, l=self.last_byte())
-                    padding = (term.width - len(self.statusline)) * ' '
-                    self.statusline += padding
                     self.redraw()
 
         self.clear()
