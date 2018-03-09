@@ -41,6 +41,9 @@ class vxd():
     def last_displayed_byte(self):
         return self.first_displayed_byte + self.num_bytes_displayed() - 1
 
+    def last_byte(self):
+        return len(self.buf) - 1
+
 
     def num_bytes_displayed(self):
         height = self.term.height - 1
@@ -110,21 +113,19 @@ class vxd():
                 elif inp == 'h':
                     self.selected_byte -= 1 if self.selected_byte > 0 else 0
                 elif inp == 'l':
-                    self.selected_byte += 1 if self.selected_byte < len(self.buf) else 0
+                    self.selected_byte += 1 if self.selected_byte < self.last_byte() else 0
                 elif inp == 'j':
-                    self.selected_byte += self.bpl if (self.selected_byte + self.bpl < len(self.buf)) else 0
+                    self.selected_byte += self.bpl if (self.selected_byte + self.bpl < self.last_byte()) else 0
                 elif inp == 'k':
                     self.selected_byte -= self.bpl if (self.selected_byte - self.bpl >= 0 ) else 0
                 elif inp == 'g':
                     self.selected_byte = 0
                 elif inp == 'G':
-                    self.selected_byte = len(self.buf) - 1
+                    self.selected_byte = self.last_byte()
 
                 if self.selected_byte != old_byte:
-                    self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})\t\tdisplayed:({first:x},{last:x})'.format(
-                            b=self.selected_byte, l=len(self.buf),
-                            first = self.first_displayed_byte,
-                            last = self.last_displayed_byte()
+                    self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(
+                            b=self.selected_byte, l=self.last_byte(),
                             )
 
                 self.redraw()
