@@ -33,7 +33,6 @@ class vxd():
              
 
     def redraw(self):
-        self.clear()
         self.redraw_status()
         self.printbuf()
 
@@ -91,7 +90,9 @@ class vxd():
                     asc_line.clear()
                     echo('\r\n')
             if len(asc_line) > 0:
-                echo(' ' * ((bpl-bnum) * 3 + 1) + ''.join(asc_line))
+                asc_padding =  ' ' * (bpl - len(asc_line))
+                hex_padding = ' ' * ((bpl-bnum) * 3 + 1)
+                echo(hex_padding + ''.join(asc_line) + asc_padding)
 
 
     def bmain(self):
