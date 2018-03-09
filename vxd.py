@@ -17,8 +17,7 @@ class vxd():
             self.buf = f.read(400)
 
     def clear(self):
-        #echo(self.term.clear)
-        self.term.clear()
+        echo(self.term.clear)
 
     def redraw_status(self):
          with self.term.location(0, self.term.height):
@@ -49,10 +48,10 @@ class vxd():
                 inp = term.inkey()
                 # q quits
                 if inp == 'q':
-                    self.clear()
                     break
                 elif inp == 'r':
                     self.redraw()
+        self.clear()
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
