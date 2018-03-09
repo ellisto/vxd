@@ -125,10 +125,9 @@ class vxd():
 
                 if self.selected_byte != old_byte:
                     self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(
-                            b=self.selected_byte, l=self.last_byte(),
-                            )
-
+                            b=self.selected_byte, l=self.last_byte())
                     self.redraw()
+
         self.clear()
 
 
