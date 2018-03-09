@@ -21,17 +21,21 @@ class vxd():
             self.selected_byte = 0
         self.redraw()
 
+
     def clear(self):
         echo(self.term.clear)
+
 
     def redraw_status(self):
          with self.term.location(0, self.term.height):
              echo(self.statusline)
+             
 
     def redraw(self):
         self.clear()
         self.redraw_status()
         self.printbuf()
+
 
     def printbuf(self):
         if self.buf is None:
@@ -44,9 +48,6 @@ class vxd():
         with self.term.location(0,0):
             for i, b in enumerate(self.buf):
                 if i == numbytes:
-                    #bnum = i % bpl
-                    #if bnum > 0:
-                    #    echo(' ' * ((bpl-bnum) * 3 + 1) + ''.join(asc_line))
                     break
                 bnum = i % bpl
                 if bnum == 0:
@@ -61,8 +62,6 @@ class vxd():
             if len(asc_line) > 0:
                 echo(' ' * ((bpl-bnum) * 3 + 1) + ''.join(asc_line))
 
-            #echo(hexdump(self.buf[:400], 'return'))
-        
 
     def bmain(self):
         self.redraw()
@@ -82,11 +81,12 @@ class vxd():
                     break
         self.clear()
 
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("Usage: {} <filepath>".format(sys.argv[0]))
         exit(1)
-    #v = vxd('/home/tje/test.bin')
+
     filepath = sys.argv[1]
     v = vxd(filepath)
     v.bmain()
