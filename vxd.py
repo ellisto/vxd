@@ -54,9 +54,11 @@ class vxd():
                 bnum = i % bpl
                 if bnum == 0:
                     echo('{:08x} '.format(i))
-                echo('{}{:02x}{} '.format(t.standout if i == self.selected_byte else t.no_standout,  b, t.no_standout))
-                #todo make nonprintables distinct from a literal '.' (maybe dim formatting?)
-                asc_line.append(chr(b) if (b > 0x1f and b < 0x7f) else '.') 
+
+                active = (i == self.selected_byte) 
+                echo('{}{:02x}{} '.format(t.standout if active  else t.no_standout,  b, t.no_standout))
+                char = t.bold(chr(b)) if (b > 0x1f and b < 0x7f) else t.dim('.')
+                asc_line.append(t.standout(char) if active else char) 
                 if bnum == bpl - 1: # time for new line
                     echo(' {}'.format(''.join(asc_line)))
                     asc_line.clear()
