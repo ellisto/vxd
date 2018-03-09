@@ -82,7 +82,8 @@ class vxd():
 
                 active = (i + offset == self.selected_byte) 
                 h = '{:02x}'.format(b)
-                echo('{} '.format(t.standout(h) if active else h))
+                sep = '  ' if bnum == bpl//2 - 1 else ' '
+                echo('{}{}'.format(t.standout(h) if active else h, sep))
                 char = t.bold(chr(b)) if (b > 0x1f and b < 0x7f) else t.dim('.')
                 asc_line.append(t.standout(char) if active else char) 
                 if bnum == bpl - 1: # time for new line
