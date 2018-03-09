@@ -79,6 +79,7 @@ class vxd():
             while True:
                 inp = term.inkey()
                 self.statusline = ''
+                old_byte = self.selected_byte
                 # q quits
                 if inp == 'q':
                     break
@@ -90,6 +91,10 @@ class vxd():
                     self.selected_byte += self.bpl if (self.selected_byte + self.bpl < len(self.buf)) else 0
                 elif inp == 'k':
                     self.selected_byte -= self.bpl if (self.selected_byte - self.bpl > 0 ) else 0
+
+                if self.selected_byte != old_byte:
+                    self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(b=self.selected_byte, l=len(self.buf))
+
                 self.redraw()
         self.clear()
 
