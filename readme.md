@@ -25,3 +25,8 @@ TODO
  - colors
  - open new file from inside vxd (`o`)
  - buffered file reading to handle large files
+ - selection of multiple bytes (w/count)
+ - searching (hex or ascii)
+ - value preview (value of a int/uint/etc at the current offset)
+ - struct/templates!?
+ - diffing
