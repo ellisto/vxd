@@ -12,11 +12,14 @@ class vxd():
         self.file = filepath
         self.file2 = filepath2
         self.bpl = bpl
-        filenames = '{} and {}'.format(self.file, self.file2) if self.file2 else self.file
-        self.statusline = "Opening {}...".format(filenames)
+        self.statusline = "Opening {}...".format(self.file)
+        self.statusline2 = None
+        if self.file2:
+            self.statusline2 = "Opening {}...".format(self.file2)
         self.term = Terminal()
         self.buf = None
         self.buf2 = None
+        self.first_displayed_byte = 0
         self.redraw()
 
         # TODO: don't read the whole file in; this would be bad on big files
@@ -26,10 +29,10 @@ class vxd():
         if self.file2:
             with open(self.file2, 'rb') as f:
                 self.buf2 = f.read()
+            self.statusline2 = ''
 
         if self.buf:
             self.selected_byte = 0
-            self.first_displayed_byte = 0
 
         self.redraw()
 
@@ -39,18 +42,24 @@ class vxd():
 
 
     def redraw_status(self):
-        padding = (self.term.width - len(self.statusline)) * ' '
-        with self.term.location(0, self.term.height):
-             echo(self.statusline + padding)
-             
+        self.print_statusline(self.statusline, self.term.height, self.file)
+        if self.statusline2 is not None:
+            self.print_statusline(self.statusline2, self.last_displayed_row() + 1, self.file2)
+
+    def print_statusline(self, statusline, row, filename=None):
+        if filename:
+            statusline = "{}: {}".format(filename, statusline)
+
+        padding = (self.term.width - len(statusline)) * ' '
+
+        with self.term.location(0, row):
+             echo(statusline + padding)
 
     def redraw(self):
         self.redraw_status()
         self.printbuf(self.buf, self.buf2)
         if self.buf2:
-            row_offset = int(self.row_of(self.last_displayed_byte())) + 2
-            #with self.term.location(0, row_offset):
-            #    echo("This is where we'll print buf2")
+            row_offset = self.last_displayed_row() + 2
             self.printbuf(self.buf2, self.buf, row_offset)
 
 
@@ -60,12 +69,14 @@ class vxd():
     def last_byte(self):
         return len(self.buf) - 1
 
+    def last_displayed_row(self):
+        return self.row_of(self.last_displayed_byte())
 
     def num_bytes_displayed(self):
         height = self.term.height - 1
         if self.file2:
             height -= 1 # leave room for a second filename line
-            height /= 2 # second file takes half the screen
+            height //= 2 # second file takes half the screen
         return self.bpl * height
 
 
@@ -137,7 +148,7 @@ class vxd():
             inp = None
             while True:
                 inp = t.inkey()
-                self.statusline = self.file
+                self.statusline = ''
                 old_byte = self.selected_byte
                 # q quits
                 if inp == 'q':
@@ -159,8 +170,9 @@ class vxd():
                     self.selected_byte = self.last_byte()
 
                 if self.selected_byte != old_byte:
-                    self.statusline = '{f}: byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(
-                            f=self.file, b=self.selected_byte, l=self.last_byte())
+                    self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(
+                            b=self.selected_byte, l=self.last_byte())
+                    self.statusline2 = self.statusline
                     self.redraw()
 
         self.clear()
