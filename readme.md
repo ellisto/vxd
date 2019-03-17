@@ -20,7 +20,7 @@ G   | go to end of file
 TODO
 ---------------------------------------
  - Editor capability
- - Fix flickering
+ - Fix flickering on some terminals
  - go to specific offset
  - colors
  - open new file from inside vxd (`o`)
@@ -29,4 +29,4 @@ TODO
  - searching (hex or ascii)
  - value preview (value of a int/uint/etc at the current offset)
  - struct/templates!?
- - diffing
+ - vertical split diffing

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import curses
 import sys
 from blessed import Terminal
 import functools
@@ -38,15 +37,20 @@ class vxd():
 
 
     def clear(self):
+        ''' clear screen '''
         echo(self.term.clear)
 
 
     def redraw_status(self):
+        ''' redraw both statuslines '''
         self.print_statusline(self.statusline, self.term.height, self.file)
         if self.statusline2 is not None:
             self.print_statusline(self.statusline2, self.last_displayed_row() + 1, self.file2)
 
     def print_statusline(self, statusline, row, filename=None):
+        '''print statusline at specified row.
+           prepend filename to statusline if provided
+        '''
         if filename:
             statusline = "{}: {}".format(filename, statusline)
 
@@ -56,6 +60,7 @@ class vxd():
              echo(statusline + padding)
 
     def redraw(self):
+        ''' redraw the screen '''
         self.redraw_status()
         self.printbuf(self.buf, self.buf2)
         if self.buf2:
@@ -64,15 +69,21 @@ class vxd():
 
 
     def last_displayed_byte(self):
+        ''' return the index of the last byte displayed onscreen '''
         return self.first_displayed_byte + self.num_bytes_displayed() - 1
 
     def last_byte(self):
+        ''' return the index of the last byte in the active buffer'''
         return len(self.buf) - 1
 
     def last_displayed_row(self):
+        ''' return the index of the row containing the last displayed byte'''
         return self.row_of(self.last_displayed_byte())
 
     def num_bytes_displayed(self):
+        ''' return the number of bytes displayed from a single buf on the
+            screen at one time
+        '''
         height = self.term.height - 1
         if self.file2:
             height -= 1 # leave room for a second filename line
@@ -81,6 +92,7 @@ class vxd():
 
 
     def row_of(self, byteidx):
+        ''' return the row number containing the byte at specified index '''
         return byteidx // self.bpl
 
 
