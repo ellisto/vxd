@@ -8,18 +8,29 @@ import functools
 echo = functools.partial(print, end='', flush=True)
 
 class vxd():
-    def __init__(self, filepath='', bpl=16):
+    def __init__(self, filepath='', filepath2=None, bpl=16):
         self.file = filepath
+        self.file2 = filepath2
         self.bpl = bpl
-        self.statusline = "Opening {}...".format(self.file)
+        filenames = '{} and {}'.format(self.file, self.file2) if self.file2 else self.file
+        self.statusline = "Opening {}...".format(filenames)
         self.term = Terminal()
         self.buf = None
+        self.buf2 = None
         self.redraw()
+
+        # TODO: don't read the whole file in; this would be bad on big files
         with open(self.file, 'rb') as f:
             self.buf = f.read()
-        if self.buf is not None:
+
+        if self.file2:
+            with open(self.file2, 'rb') as f:
+                self.buf2 = f.read()
+
+        if self.buf:
             self.selected_byte = 0
             self.first_displayed_byte = 0
+
         self.redraw()
 
 
@@ -35,7 +46,12 @@ class vxd():
 
     def redraw(self):
         self.redraw_status()
-        self.printbuf()
+        self.printbuf(self.buf, self.buf2)
+        if self.buf2:
+            row_offset = int(self.row_of(self.last_displayed_byte())) + 2
+            #with self.term.location(0, row_offset):
+            #    echo("This is where we'll print buf2")
+            self.printbuf(self.buf2, self.buf, row_offset)
 
 
     def last_displayed_byte(self):
@@ -47,6 +63,9 @@ class vxd():
 
     def num_bytes_displayed(self):
         height = self.term.height - 1
+        if self.file2:
+            height -= 1 # leave room for a second filename line
+            height /= 2 # second file takes half the screen
         return self.bpl * height
 
 
@@ -54,8 +73,13 @@ class vxd():
         return byteidx // self.bpl
 
 
-    def printbuf(self):
-        if self.buf is None:
+    def printbuf(self, buf, diff=None, row_offset=0):
+        ''' Print specified buffer with hex and ascii.
+            If row_offset is specified, start at that offset down the screen
+            otherwise buffer will be printed starting at the first row of the
+            terminal
+        '''
+        if buf is None:
             return
         bpl = self.bpl
         asc_line = []
@@ -73,8 +97,8 @@ class vxd():
         offset = self.first_displayed_byte
         bnum = 0
         t = self.term
-        with self.term.location(0,0):
-            for i, b in enumerate(self.buf[offset:]):
+        with self.term.location(0, row_offset):
+            for i, b in enumerate(buf[offset:]):
                 if i == numbytes:
                     break
                 bnum = i % bpl
@@ -84,8 +108,12 @@ class vxd():
                 active = (i + offset == self.selected_byte) 
                 h = '{:02x}'.format(b)
                 sep = '  ' if bnum == bpl//2 - 1 else ' '
-                echo('{}{}'.format(t.standout(h) if active else h, sep))
                 char = t.bold(chr(b)) if (b > 0x1f and b < 0x7f) else t.dim('.')
+                if diff:
+                    if i < len(diff) and b != diff[i]:
+                        char = t.red(char)
+                        h = t.red(h)
+                echo('{}{}'.format(t.standout(h) if active else h, sep))
                 asc_line.append(t.standout(char) if active else char) 
                 if bnum == bpl - 1: # time for new line
                     echo(' {}'.format(''.join(asc_line)))
@@ -98,6 +126,7 @@ class vxd():
 
 
     def bmain(self):
+        self.clear()
         self.redraw()
         t = self.term
         with t.hidden_cursor(), \
@@ -108,7 +137,7 @@ class vxd():
             inp = None
             while True:
                 inp = t.inkey()
-                self.statusline = ''
+                self.statusline = self.file
                 old_byte = self.selected_byte
                 # q quits
                 if inp == 'q':
@@ -130,8 +159,8 @@ class vxd():
                     self.selected_byte = self.last_byte()
 
                 if self.selected_byte != old_byte:
-                    self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(
-                            b=self.selected_byte, l=self.last_byte())
+                    self.statusline = '{f}: byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(
+                            f=self.file, b=self.selected_byte, l=self.last_byte())
                     self.redraw()
 
         self.clear()
@@ -139,9 +168,13 @@ class vxd():
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Usage: {} <filepath>".format(sys.argv[0]))
+        print("Usage: {} <filepath> [<filepath-to-diff>]".format(sys.argv[0]))
         exit(1)
 
     filepath = sys.argv[1]
-    v = vxd(filepath)
+    filepath2 = None
+    if len(sys.argv) > 2:
+        filepath2 = sys.argv[2]
+
+    v = vxd(filepath, filepath2)
     v.bmain()
