@@ -15,6 +15,8 @@ j   | move down
 k   | move up
 g   | go to beginning of file
 G   | go to end of file
+n   | goto next diff
+N   | goto previous diff
 
 
 TODO
