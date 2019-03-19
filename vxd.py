@@ -37,7 +37,6 @@ class vxd():
 
         self.redraw()
 
-
     def debug(self, msg):
         if self.debug_log:
             with open('log.txt', 'a') as f:
@@ -46,7 +45,6 @@ class vxd():
     def clear(self):
         ''' clear screen '''
         echo(self.term.clear)
-
 
     def redraw_status(self):
         ''' redraw both statuslines '''
@@ -88,8 +86,8 @@ class vxd():
         return val
 
     def last_byte(self):
-        ''' return the index of the last byte in the active buffer'''
-        return len(self.buf) - 1
+        ''' return the index of the last byte displayable'''
+        return len(self.buf) - 1 if self.buf2 is None else min(len(self.buf), len(self.buf2)) - 1
 
     def last_displayed_row(self):
         ''' return the index of the row containing the last displayed byte'''
@@ -108,11 +106,25 @@ class vxd():
         val = self.bpl * height
         return val
 
+    # TODO: prev_diff
+    def next_diff(self):
+        if self.buf2 is None: return None
+
+        # TODO: handle wrapping around; handle seleced_byte == last byte
+        in_diff = self.buf[self.selected_byte] != self.buf2[self.selected_byte]
+        smaller = self.buf if len(self.buf) < len(self.buf2) else self.buf2
+        for i in range(self.selected_byte + 1, len(smaller)):
+            if self.buf[i] != self.buf2[i]:
+                if not in_diff:
+                    return i
+            else:
+                in_diff = False
+
+        return None
 
     def row_of(self, byteidx):
         ''' return the row number containing the byte at specified index '''
         return byteidx // self.bpl
-
 
     def printbuf(self, buf, diff=None, row_offset=0):
         ''' Print specified buffer with hex and ascii.
@@ -134,7 +146,6 @@ class vxd():
         elif selected_row < first_displayed_row:
             rows_to_scroll = first_displayed_row - selected_row
             self.first_displayed_byte -= bpl * rows_to_scroll
-
 
         offset = self.first_displayed_byte
         bnum = 0
@@ -168,7 +179,6 @@ class vxd():
                 hex_padding = ' ' * ((bpl-bnum) * 3 + 1)
                 echo(hex_padding + ''.join(asc_line) + asc_padding)
 
-
     def bmain(self):
         self.clear()
         self.redraw()
@@ -201,6 +211,13 @@ class vxd():
                 # G or end go to end
                 elif inp == 'G' or inp.code  == t.KEY_END:
                     self.selected_byte = self.last_byte()
+                # n for next diff
+                elif inp == 'n':
+                    b = self.next_diff()
+                    if b is None:
+                        self.statusline = "No second buffer to diff!" if not self.buf2 else "No differences!"
+                    else:
+                        self.selected_byte = b
 
                 if self.selected_byte != old_byte:
                     self.statusline = 'byte {b} (0x{b:x}) / {l} (0x{l:x})'.format(
