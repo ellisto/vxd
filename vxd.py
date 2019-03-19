@@ -8,8 +8,8 @@ import functools
 echo = functools.partial(print, end='', flush=True)
 
 class vxd():
-    def __init__(self, filepath='', filepath2=None, bpl=16, debug_log=False):
-        self.debug_log = debug_log
+    def __init__(self, filepath='', filepath2=None, bpl=16, debug=False):
+        self.debug_log = debug
         self.file = filepath
         self.file2 = filepath2
         self.bpl = bpl
@@ -106,14 +106,20 @@ class vxd():
         val = self.bpl * height
         return val
 
-    # TODO: prev_diff
-    def next_diff(self):
+    def next_diff(self, reverse=False):
         if self.buf2 is None: return None
 
+        self.debug("next_diff: reverse = {}".format(reverse))
         # TODO: handle wrapping around; handle seleced_byte == last byte
         in_diff = self.buf[self.selected_byte] != self.buf2[self.selected_byte]
         smaller = self.buf if len(self.buf) < len(self.buf2) else self.buf2
-        for i in range(self.selected_byte + 1, len(smaller)):
+        if reverse:
+            r = range(self.selected_byte - 1, 0, -1)
+        else:
+            r = range(self.selected_byte + 1, len(smaller))
+
+        for i in r:
+            if reverse: self.debug(hex(i))
             if self.buf[i] != self.buf2[i]:
                 if not in_diff:
                     return i
@@ -215,7 +221,22 @@ class vxd():
                 elif inp == 'n':
                     b = self.next_diff()
                     if b is None:
-                        self.statusline = "No second buffer to diff!" if not self.buf2 else "No differences!"
+                        if not self.buf2:
+                            self.statusline = "No second buffer to diff!"
+                        else:
+                            self.statusline2 = "No differences!"
+                        self.redraw_status()
+                    else:
+                        self.selected_byte = b
+                # N for prev diff
+                elif inp == 'N':
+                    b = self.next_diff(reverse=True)
+                    if b is None:
+                        if not self.buf2:
+                            self.statusline = "No second buffer to diff!"
+                        else:
+                            self.statusline2 = "No differences!"
+                        self.redraw_status()
                     else:
                         self.selected_byte = b
 
@@ -238,5 +259,5 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         filepath2 = sys.argv[2]
 
-    v = vxd(filepath, filepath2)
+    v = vxd(filepath, filepath2, debug = False)
     v.bmain()
