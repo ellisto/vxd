@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
+import functools
+import struct
 import sys
 import time
+
 from blessed import Terminal
-import functools
 
 echo = functools.partial(print, end='', flush=True)
 
 class vxd():
-    def __init__(self, filepath='', filepath2=None, bpl=16, debug=False):
+    def __init__(self, filepath='', filepath2=None, bpl=16, debug=False, term=None):
         self.debug_log = debug
         self.file = filepath
         self.file2 = filepath2
@@ -17,10 +19,11 @@ class vxd():
         self.statusline2 = None
         if self.file2:
             self.statusline2 = "Opening {}...".format(self.file2)
-        self.term = Terminal()
+        self.term = term if term else Terminal()
         self.buf = None
         self.buf2 = None
         self.first_displayed_byte = 0
+        self.selected_byte = 0
         self.redraw()
 
         # TODO: don't read the whole file in; this would be bad on big files
@@ -32,8 +35,6 @@ class vxd():
                 self.buf2 = f.read()
             self.statusline2 = ''
 
-        if self.buf:
-            self.selected_byte = 0
 
         self.redraw()
 
@@ -72,9 +73,38 @@ class vxd():
         ''' redraw the screen '''
         self.redraw_status()
         self.printbuf(self.buf, self.buf2)
+        #TODO: check available width and only include value preview if room
+        # also could display below buffer if term is taller than wide
+        self.value_preview(0, self.buf)
         if self.buf2:
             row_offset = self.second_buf_start()
             self.printbuf(self.buf2, self.buf, row_offset)
+            self.value_preview(row_offset, self.buf2)
+
+    def selected_buf_subset(self,buf, len):
+        return bytearray(buf[self.selected_byte:self.selected_byte+len])
+
+    def clear_to_eol(self):
+        y, x = self.term.get_location()
+        space_left = self.term.width - x
+        with self.term.location():
+            echo(' ' * space_left)
+
+    def value_preview(self, row, buf):
+        if not buf: return
+        typevals = []
+        typevals.append([2, 'int16', struct.unpack('h', self.selected_buf_subset(buf, 2))[0]])
+        typevals.append([2,'uint16', struct.unpack('H', self.selected_buf_subset(buf, 2))[0]])
+        typevals.append([4, 'int32', struct.unpack('i', self.selected_buf_subset(buf, 4))[0]])
+        typevals.append([4, 'uint32', struct.unpack('I', self.selected_buf_subset(buf, 4))[0]])
+        typevals.append([8, 'int64', struct.unpack('l', self.selected_buf_subset(buf, 8))[0]])
+        typevals.append([8, 'uint64', struct.unpack('L', self.selected_buf_subset(buf, 8))[0]])
+
+        for w, t, val in typevals:
+            with self.term.location(76, row):
+                self.clear_to_eol()
+                echo("{:>6}: {v:<20} {v:#0{w}x}".format(t, w=w, v=val))
+            row += 1
 
     def second_buf_start(self):
         return (self.term.height // 2)
@@ -259,5 +289,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         filepath2 = sys.argv[2]
 
-    v = vxd(filepath, filepath2, debug = False)
-    v.bmain()
+    term = Terminal()
+    with term.fullscreen():
+        v = vxd(filepath, filepath2, debug = False)
+        v.bmain()
