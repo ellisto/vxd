@@ -29,6 +29,7 @@ TODO
  - buffered file reading to handle large files
  - selection of multiple bytes (w/count)
  - searching (hex or ascii)
- - value preview (value of a int/uint/etc at the current offset)
  - struct/templates!?
  - vertical split diffing
+ - specify endianness of value preview
+ - additional value preview types
