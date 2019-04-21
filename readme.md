@@ -15,12 +15,14 @@ j   | move down
 k   | move up
 g   | go to beginning of file
 G   | go to end of file
+n   | goto next diff
+N   | goto previous diff
 
 
 TODO
 ---------------------------------------
  - Editor capability
- - Fix flickering
+ - Fix flickering on some terminals
  - go to specific offset
  - colors
  - open new file from inside vxd (`o`)
@@ -29,4 +31,4 @@ TODO
  - searching (hex or ascii)
  - value preview (value of a int/uint/etc at the current offset)
  - struct/templates!?
- - diffing
+ - vertical split diffing
