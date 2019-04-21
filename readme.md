@@ -1,6 +1,6 @@
-VXD (Vim-like heX eDitor)
+VXD (Vim-like heX Diff)
 ======================================
-VXD is a curses-based console hex viewer with vimlike key bindings.
+VXD is a curses-based console hex viewer and differ with vimlike key bindings.
 
 Eventually, it will have support for editing as well.
 
